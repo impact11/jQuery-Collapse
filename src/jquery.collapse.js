@@ -1,8 +1,11 @@
-/*
+/*!
  * Collapse plugin for jQuery
  * http://github.com/danielstocks/jQuery-Collapse/
  *
  * @author Daniel Stocks (http://webcloud.se)
+ * @version 0.9.1
+ * @updated 17-AUG-2010
+ * 
  * Copyright 2010, Daniel Stocks
  * Released under the MIT, BSD, and GPL Licenses.
  */
@@ -32,7 +35,9 @@
             
             // Default CSS classes
             var active = "active",
-                inactive = "inactive";
+                inactive = "inactive",
+                expanded = "expanded",
+                folded = "folded";
             
             return this.each(function() {
                 
@@ -47,9 +52,9 @@
                     var panel = obj.find(op.head).map(function() {
                         var head = $(this)
                         if(!head.hasClass(active)) {
-                            return head.next(op.group).hide()[0];
+                            return head.siblings(op.group).first().hide()[0];
                         }
-                        return head.next(op.group)[0];
+                        return head.siblings(op.group).first()[0];
                     });
     
                 // Bind event for showing content
@@ -57,9 +62,12 @@
                     var obj = $(e.target);
                     // ARIA attribute
                     obj.attr('aria-hidden', false)
-                        .prev()
+                        .siblings(op.head).first()
                         .removeClass(inactive)
-                        .addClass(active);
+                        .addClass(active)
+                        .parent()      					
+                        .removeClass(folded)				
+                        .addClass(expanded);				
                     // Bypass method for instant display
                     if(bypass) {
                         obj.show();
@@ -72,9 +80,12 @@
                 obj.bind("hide", function(e, bypass) {
                     var obj = $(e.target);
                     obj.attr('aria-hidden', true)
-                        .prev()
+						.siblings(op.head).first()
                         .removeClass(active)
-                        .addClass(inactive);
+                        .addClass(inactive)
+                        .parent()							
+                        .removeClass(expanded)				
+                        .addClass(folded);					
                     if(bypass) {
                         obj.hide();
                     } else {
@@ -113,7 +124,8 @@
                     var num = sections.index(t),
                         cookieName = cookie + num,
                         cookieVal = num,
-                        content = t.next(op.group);
+//                        content = t.next(op.group);
+                        content = t.siblings(op.group).first(); 
                     // If content is already active, hide it.
                     if(t.hasClass(active)) {
                         content.trigger('hide');
@@ -135,15 +147,14 @@
     });
 
     // Make sure can we eat cookies without getting into trouble.
-    var cookie = true;
-    $(function() {
+    var cookieSupport = (function() {
         try {
             $.cookie('x', 'x', { path: '/', expires: 10 });
-        }
-        catch(e) {
-            cookie = false;
             $.cookie('x', null);
         }
-    });
-    var cookieSupport = $.fn.collapse.cookieSupport = cookie;
+        catch(e) {
+            return false;
+        }
+        return true;
+    })();
 })(jQuery);
